@@ -1,20 +1,10 @@
 steps:
   # Docker Build
   - name: "gcr.io/cloud-builders/docker"
-    args:
-      [
-        "build",
-        "-t",
-        "gcr.io/$PROJECT_ID/my-registry/v2g-server:$SHORT_SHA",
-        ".",
-      ]
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/${_SERVICE_NAME}", "${_PATH}"]
     # Docker push to Google Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
-    args:
-      [
-        "push",
-        "gcr.io/$PROJECT_ID/my-registry/v2g-server:$SHORT_SHA",
-      ]
+    args: ["push", "gcr.io/$PROJECT_ID/${_SERVICE_NAME}"]
   # Deploy to Cloud Run
   - name: "gcr.io/cloud-builders/gcloud"
     args:
@@ -23,7 +13,7 @@ steps:
         "deploy",
         "v2g-server",
         "--image",
-        "gcr.io/$PROJECT_ID/my-registry/v2g-server:$SHORT_SHA",
+        "gcr.io/$PROJECT_ID/${_SERVICE_NAME}",
         "--region",
         "europe-west4",
         "--platform",
@@ -31,5 +21,9 @@ steps:
         "--allow-unauthenticated",
       ]
 
+substitutions:
+  _SERVICE_NAME: videos2gether
+  _PATH: .
+
 images:
-  - "gcr.io/$PROJECT_ID/my-registry/v2g-server:$SHORT_SHA"
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}"

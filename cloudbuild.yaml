@@ -7,3 +7,5 @@ steps:
       - "submit"
       - "--config"
       - "./services/server/cloudbuild.yaml"
+      - "--substitutions"
+      - "_PATH=services/server"
