@@ -1,0 +1,9 @@
+steps:
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: call-server-service
+    entrypoint: "gcloud"
+    args:
+      - "builds"
+      - "submit"
+      - "--config"
+      - "./services/server/cloudbuild.yaml"

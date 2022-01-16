@@ -1,0 +1,10 @@
+runtime: nodejs10
+service: default
+handlers:
+    # Serve all static files with urls ending with a file extension
+    - url: /(.*\..+)$
+      upload: build/(.*\..+)$
+      # catch all handler to index.html
+    - url: /.*
+      static_files: build/index.html
+      upload: build/index.html

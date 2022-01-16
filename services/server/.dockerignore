@@ -1,0 +1,22 @@
+# Git
+.git/
+.gitignore
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Binaries
+/<APPLICATION_NAME>
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Development files
+.env
+/README.md
+node_modules
