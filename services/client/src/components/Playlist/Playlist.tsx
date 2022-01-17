@@ -2,7 +2,6 @@ import React from 'react'
 import { PlaylistProps as Props } from './types'
 import ReactPlayer from 'react-player'
 import classnames from 'util/classnames'
-import c from './Playlist.module.scss'
 
 const YT_VARS = {
   youtube: {
@@ -22,7 +21,7 @@ const Playlist: React.FC<Props> = ({ videosUrls, className, ...rest }) => {
   };
 
   return (
-    <div className={classnames(c.List, className)} {...rest}>
+    <div className={classnames('p-1.5 h-screen overflow-y-auto', className)} {...rest}>
       {hasVideos && <h3>Playlist</h3>}
 
       {videosUrls.map((video, index) => {
@@ -30,7 +29,7 @@ const Playlist: React.FC<Props> = ({ videosUrls, className, ...rest }) => {
 
         return (
           <div
-            className={c.Video}
+            className='h-32 w-full overflow-hidden mb-2.5'
             style={isCurrentPlaying ? currentStyles : {}}
             key={index}
           >
