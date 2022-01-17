@@ -12,6 +12,7 @@
 # Binaries
 /<APPLICATION_NAME>
 *.test
+streamserver
 
 # Output of the go coverage tool
 *.out
