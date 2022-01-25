@@ -8,6 +8,7 @@ import (
 	"streamserver/streaming"
 	"streamserver/streaming/hub"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
 	"github.com/gorilla/websocket"
@@ -48,12 +49,9 @@ func (h *WS) handleRoomConn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := &hub.Connection{Send: make(chan []byte, 256), Conn: ws}
-	sub := hub.Subscription{Conn: c, Room: roomID}
-	hub.Instance.Register <- sub
+	c := &hub.Connection{Send: make(chan []byte, 256), WS: ws}
 
-	sub.SyncToRoom()
-
-	go sub.Write()
-	go sub.Read()
+	rnd, _ := uuid.NewRandom()
+	newUser := hub.User{Conn: c, RoomID: roomID, Name: rnd.String()}
+	newUser.Register()
 }

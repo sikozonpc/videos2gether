@@ -1,6 +1,5 @@
 package hub
 
-// Playlist is a collection of videos
 type Playlist []VideoData
 
 func (p Playlist) Unqueue() Playlist {
@@ -18,11 +17,4 @@ func (p Playlist) GetCurrent() VideoData {
 		return VideoData{}
 	}
 	return p[0]
-}
-
-// UpdateCurrent updates the current video playing
-func (p Playlist) UpdateCurrent(u VideoData) {
-	if len(p) > 0 {
-		p[0] = u
-	}
 }
