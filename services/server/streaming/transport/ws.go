@@ -53,5 +53,5 @@ func (h *WS) handleRoomConn(w http.ResponseWriter, r *http.Request) {
 
 	rnd, _ := uuid.NewRandom()
 	newUser := hub.User{Conn: c, RoomID: roomID, Name: rnd.String()}
-	newUser.Register()
+	newUser.Connect()
 }

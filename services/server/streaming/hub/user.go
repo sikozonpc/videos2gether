@@ -16,8 +16,8 @@ type User struct {
 	Conn *Connection
 }
 
-func (u *User) Register() {
-	Instance.Register <- *u
+func (u *User) Connect() {
+	Instance.Connect <- *u
 
 	go u.StartSending()
 	go u.StartReading()
@@ -35,7 +35,7 @@ func (u *User) StartReading() {
 	})
 
 	defer func() {
-		Instance.Unregister <- *u
+		Instance.Disconnect <- *u
 		c.WS.Close()
 	}()
 

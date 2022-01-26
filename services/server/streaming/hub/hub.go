@@ -6,24 +6,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Hub maintains the set of active connections and broadcasts messages to the connections
+// Hub represents a lobby and it's responsible for connecting, disconnecting and broadcasting
+// the users events.
+// It runs as a loop listenning and redirecting the web socket request to it's handler.
 type Hub struct {
-	Connections map[string]map[*Connection]bool
 	// Inbound messages from the connections.
 	Broadcast (chan Message)
-	// Register requests from the connections.
-	Register (chan User)
-	// Unregister requests from connections.
-	Unregister (chan User)
-	// RoomsData registered rooms data
+	// Connect requests from the connections.
+	Connect (chan User)
+	// Disconnect requests from connections.
+	Disconnect (chan User)
+	// RoomsData is the rooms state data
 	RoomsPlaylist map[string]Playlist
+	// Connections are a map of connected clients for each room
+	Connections   map[string]map[*Connection]bool
 }
 
-// Instance is the global Hub instance that manages the connected subscriptions
+// Instance is the global Hub instance that manages the holds the application state
 var Instance = Hub{
 	Broadcast:     make(chan Message),
-	Register:      make(chan User),
-	Unregister:    make(chan User),
+	Connect:       make(chan User),
+	Disconnect:    make(chan User),
 	Connections:   make(map[string]map[*Connection]bool),
 	RoomsPlaylist: make(map[string]Playlist),
 }
@@ -33,35 +36,12 @@ func (h *Hub) Run() {
 
 	for {
 		select {
-		case u := <-h.Register:
+		case u := <-h.Connect:
 			h.connectUser(&u)
-		case u := <-h.Unregister:
-			connections := h.Connections[u.RoomID]
-			if connections != nil {
-				if _, ok := connections[u.Conn]; ok {
-					delete(connections, u.Conn)
-					h.disconnectUser(&u)
-
-					if len(connections) == 0 {
-						h.removeRoom(u.RoomID)
-					}
-				}
-			}
+		case u := <-h.Disconnect:
+			h.handleDisconnectUser(&u)
 		case msg := <-h.Broadcast:
-			chanConns := h.Connections[msg.RoomID]
-
-			for c := range chanConns {
-				select {
-				case c.Send <- msg.Data:
-				default:
-					close(c.Send)
-					delete(chanConns, c)
-
-					if len(chanConns) == 0 {
-						h.removeRoom(msg.RoomID)
-					}
-				}
-			}
+			h.broadcast(msg)
 		}
 	}
 }
@@ -99,6 +79,20 @@ func (h *Hub) disconnectUser(u *User) {
 	}).Info("[HUB] User disconnected")
 }
 
+func (h *Hub) handleDisconnectUser(u *User) {
+	connections := h.Connections[u.RoomID]
+	if connections != nil {
+		if _, ok := connections[u.Conn]; ok {
+			delete(connections, u.Conn)
+			h.disconnectUser(u)
+
+			if len(connections) == 0 {
+				h.removeRoom(u.RoomID)
+			}
+		}
+	}
+}
+
 func (h *Hub) removeRoom(roomID string) {
 	delete(h.RoomsPlaylist, roomID)
 	delete(h.Connections, roomID)
@@ -110,4 +104,21 @@ func (h *Hub) removeRoom(roomID string) {
 
 func (h *Hub) getRoomPop(id string) int {
 	return len(h.Connections[id])
+}
+
+func (h *Hub) broadcast(msg Message) {
+	roomConns := h.Connections[msg.RoomID]
+
+	for c := range roomConns {
+		select {
+		case c.Send <- msg.Data:
+		default:
+			close(c.Send)
+			delete(roomConns, c)
+
+			if len(roomConns) == 0 {
+				h.removeRoom(msg.RoomID)
+			}
+		}
+	}
 }
