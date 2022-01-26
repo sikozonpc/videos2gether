@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"encoding/json"
 	"streamserver/log"
 	"time"
 
@@ -84,6 +85,16 @@ func (u *User) StartSending() {
 			}
 		}
 	}
+}
+
+func (u *User) broadcastMessage(msg SocketMessage) {
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	m := Message{marshalled, u.RoomID}
+	Instance.Broadcast <- m
 }
 
 func (u *User) syncToRoom() {

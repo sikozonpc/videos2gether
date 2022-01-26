@@ -2,7 +2,7 @@ package hub
 
 type Playlist []VideoData
 
-func (p Playlist) Unqueue() Playlist {
+func (p Playlist) Dequeue() Playlist {
 	_, p = p[0], p[1:]
 	return p
 }
