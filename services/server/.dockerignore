@@ -21,3 +21,4 @@ streamserver
 .env
 /README.md
 node_modules
+Makefile

@@ -24,3 +24,5 @@ yarn-error.log*
 
 streamserver
 docs/
+
+.env

@@ -43,17 +43,17 @@ func (s *Server) Run() {
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
 	})
 
-	port := ":" + env.Vars.Port
+	fullAddr := env.Vars.Address + ":" + env.Vars.Port
 
 	h := &http.Server{
-		Addr:         port,
+		Addr:         fullAddr,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		Handler:      c.Handler(s),
 	}
 
 	go func() {
-		log.Printf("Listening on %s\n", port)
+		log.Printf("Listening on %s\n", fullAddr)
 
 		if err := h.ListenAndServe(); err != nil {
 			log.Fatal(err)

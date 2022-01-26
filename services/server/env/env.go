@@ -23,6 +23,10 @@ func init() {
 
 	flag.Parse()
 
-	Vars.Address = *addr
-	Vars.Port = *port
+	if *addr != "" {
+		Vars.Address = *addr
+	}
+	if *port != "" {
+		Vars.Port = *port
+	}
 }
