@@ -27,12 +27,13 @@ type Connection struct {
 
 type Message struct {
 	Data []byte
-	Room string
+	RoomID string
 }
 
 type SocketMessage struct {
-	Action string    `json:"action"`
-	Data   VideoData `json:"data"`
+	Action   string        `json:"action"`
+	Data     VideoData     `json:"data"`
+	Metadata EventMetaData `json:"metadata"`
 }
 
 type RequestSocketMessage struct {

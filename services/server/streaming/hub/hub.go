@@ -47,17 +47,18 @@ func (h *Hub) Run() {
 					}
 				}
 			}
-		case m := <-h.Broadcast:
-			connections := h.Connections[m.Room]
+		case msg := <-h.Broadcast:
+			chanConns := h.Connections[msg.RoomID]
 
-			for c := range connections {
+			for c := range chanConns {
 				select {
-				case c.Send <- m.Data:
+				case c.Send <- msg.Data:
 				default:
 					close(c.Send)
-					delete(connections, c)
-					if len(connections) == 0 {
-						delete(h.Connections, m.Room)
+					delete(chanConns, c)
+
+					if len(chanConns) == 0 {
+						h.removeRoom(msg.RoomID)
 					}
 				}
 			}
@@ -105,4 +106,8 @@ func (h *Hub) removeRoom(roomID string) {
 	log.Logger.WithFields(logrus.Fields{
 		"room": roomID,
 	}).Info("[HUB] Room deleted")
+}
+
+func (h *Hub) getRoomPop(id string) int {
+	return len(h.Connections[id])
 }

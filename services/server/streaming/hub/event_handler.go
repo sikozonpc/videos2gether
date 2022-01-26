@@ -20,13 +20,22 @@ const (
 	SEND_TIME_TO_SERVER EventType = "SEND_TIME_TO_SERVER"
 )
 
+type EventMetaData struct {
+	ActionFrom       string
+	UsersConnected int
+	RoomID         string
+}
+
 func HandleActionEvent(rawMsg []byte, u *User) {
 	logger := log.Logger.WithFields(logrus.Fields{
 		"room": u.RoomID,
+		"user": u.Name,
 	})
 
-	eventType, data := UnmarshalSocketMessage(rawMsg)
+	eventType, data := unmarshalSocketMessage(rawMsg)
 	itemsInPlaylist := len(Instance.RoomsPlaylist[u.RoomID]) > 0
+
+	meta := EventMetaData{u.Name, Instance.getRoomPop(u.RoomID), u.RoomID}
 
 	switch eventType {
 	case REQUEST:
@@ -39,11 +48,8 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 
 		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 
-		res := SocketMessage{
-			Action: "END_VIDEO",
-			Data:   currVid,
-		}
-
+		// TODO: Validate if END_VIDEO should be sent here?
+		res := SocketMessage{"END_VIDEO", currVid, meta}
 		jsData, _ := json.Marshal(res)
 
 		m := Message{jsData, u.RoomID}
@@ -54,12 +60,9 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 			currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 			Instance.RoomsPlaylist[u.RoomID] = Instance.RoomsPlaylist[u.RoomID].Unqueue()
 
-			res := SocketMessage{
-				Action: "END_VIDEO",
-				Data:   currVid,
-			}
-
+			res := SocketMessage{"END_VIDEO", currVid, meta}
 			jsData, _ := json.Marshal(res)
+
 			m := Message{jsData, u.RoomID}
 			Instance.Broadcast <- m
 		}
@@ -68,11 +71,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 			currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 			currVid.Update(VideoData{currVid.Url, data.Time, true})
 
-			res := SocketMessage{
-				Action: "PLAY_VIDEO",
-				Data:   currVid,
-			}
-
+			res := SocketMessage{"PLAY_VIDEO", currVid, meta}
 			jsData, _ := json.Marshal(res)
 
 			m := Message{jsData, u.RoomID}
@@ -91,11 +90,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 		currVid.Update(VideoData{currVid.Url, data.Time, true})
 
-		res := SocketMessage{
-			Action: "SYNC",
-			Data:   currVid,
-		}
-
+		res := SocketMessage{"SYNC", currVid, meta}
 		jsData, _ := json.Marshal(res)
 
 		m := Message{jsData, u.RoomID}
@@ -106,11 +101,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 			currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 			currVid.Update(VideoData{currVid.Url, data.Time, false})
 
-			res := SocketMessage{
-				Action: "PAUSE_VIDEO",
-				Data:   currVid,
-			}
-
+			res := SocketMessage{"PAUSE_VIDEO", currVid, meta}
 			jsData, _ := json.Marshal(res)
 
 			m := Message{jsData, u.RoomID}
@@ -119,11 +110,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 	case SYNC:
 		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 
-		res := SocketMessage{
-			Action: "SYNC",
-			Data:   currVid,
-		}
-
+		res := SocketMessage{"SYNC", currVid, meta}
 		jsData, _ := json.Marshal(res)
 
 		m := Message{jsData, u.RoomID}
@@ -140,7 +127,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 }
 
 // Unpacks the marsheled json data by the socket message
-func UnmarshalSocketMessage(msg []byte) (EventType, VideoData) {
+func unmarshalSocketMessage(msg []byte) (EventType, VideoData) {
 	var objmap map[string]json.RawMessage
 	err := json.Unmarshal(msg, &objmap)
 	if err != nil {

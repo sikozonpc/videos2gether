@@ -59,7 +59,7 @@ func (u *User) StartReading() {
 	}
 }
 
-func (u User) StartSending() {
+func (u *User) StartSending() {
 	c := u.Conn
 	ticker := time.NewTicker(pingPeriod)
 
