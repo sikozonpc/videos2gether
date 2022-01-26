@@ -1,5 +1,7 @@
 package streaming
 
+import "streamserver/streaming/hub"
+
 // Initialize streaming application service
 func Initialize() Socket {
 	return Socket{}
@@ -8,7 +10,7 @@ func Initialize() Socket {
 // Service represents auth service interface
 type Service interface {
 	CreateRoom(id string) (*RoomData, error)
-	GetRoomPlaylist(roomID string) []string
+	GetRoomPlaylist(roomID string) hub.Playlist
 }
 
 // Socket represents streaming application service

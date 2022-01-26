@@ -21,6 +21,8 @@ func (u *User) Connect() {
 
 	go u.StartSending()
 	go u.StartReading()
+
+	u.syncToRoom()
 }
 
 func (u *User) disconnect() {
@@ -35,6 +37,9 @@ func (u *User) StartReading() {
 	})
 
 	defer func() {
+		meta := EventMetaData{u.Name, GetRoomPop(u.RoomID) - 1, u.RoomID}
+		u.broadcastMessage(SocketMessage{"USER_DISCONNECTED", VideoData{}, meta})
+
 		Instance.Disconnect <- *u
 		c.WS.Close()
 	}()
@@ -97,13 +102,14 @@ func (u *User) broadcastMessage(msg SocketMessage) {
 	Instance.Broadcast <- m
 }
 
+// Sync the user to the user with all of the initial data needed
+// Should be called after he joins a channel.
 func (u *User) syncToRoom() {
 	currVideo := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+	meta := EventMetaData{u.Name, GetRoomPop(u.RoomID) + 1, u.RoomID}
 
-	msg := SocketMessage{
-		Action: "SYNC",
-		Data:   currVideo,
-	}
-
+	msg := SocketMessage{"SYNC", currVideo, meta}
 	u.Conn.WS.WriteJSON(msg)
+
+	u.broadcastMessage(SocketMessage{"USER_JOINED", currVideo, meta})
 }

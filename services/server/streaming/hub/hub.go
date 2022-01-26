@@ -19,7 +19,7 @@ type Hub struct {
 	// RoomsData is the rooms state data
 	RoomsPlaylist map[string]Playlist
 	// Connections are a map of connected clients for each room
-	Connections   map[string]map[*Connection]bool
+	Connections map[string]map[*Connection]bool
 }
 
 // Instance is the global Hub instance that manages the holds the application state
@@ -51,6 +51,10 @@ func CheckRoomAvailability(id string) bool {
 	return len(connections) > 0
 }
 
+func GetRoomPop(id string) int {
+	return len(Instance.Connections[id])
+}
+
 func (h *Hub) connectUser(u *User) {
 	currRoomConnections := h.Connections[u.RoomID]
 	if currRoomConnections == nil {
@@ -59,8 +63,6 @@ func (h *Hub) connectUser(u *User) {
 	}
 
 	h.Connections[u.RoomID][u.Conn] = true
-
-	u.syncToRoom()
 
 	log.Logger.WithFields(logrus.Fields{
 		"user":     u.Name,
@@ -100,10 +102,6 @@ func (h *Hub) removeRoom(roomID string) {
 	log.Logger.WithFields(logrus.Fields{
 		"room": roomID,
 	}).Info("[HUB] Room deleted")
-}
-
-func (h *Hub) getRoomPop(id string) int {
-	return len(h.Connections[id])
 }
 
 func (h *Hub) broadcast(msg Message) {

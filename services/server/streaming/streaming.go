@@ -14,13 +14,6 @@ func (s Socket) CreateRoom(id string) (*RoomData, error) {
 	return &RoomData{ID: id}, nil
 }
 
-func (s Socket) GetRoomPlaylist(roomID string) []string {
-	roomPlaylist := hub.Instance.RoomsPlaylist[roomID]
-	var playlist []string
-
-	for _, video := range roomPlaylist {
-		playlist = append(playlist, video.Url)
-	}
-
-	return playlist
+func (s Socket) GetRoomPlaylist(roomID string) hub.Playlist {
+	return hub.Instance.RoomsPlaylist[roomID]
 }

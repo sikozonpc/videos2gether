@@ -16,14 +16,16 @@ const (
 	PAUSE_VIDEO         EventType = "PAUSE_VIDEO"
 	END_VIDEO           EventType = "END_VIDEO"
 	SYNC                EventType = "SYNC"
+	USER_JOINED         EventType = "USER_JOINED"
+	USER_DISCONNECTED   EventType = "USER_DISCONNECTED"
 	REQUEST_TIME        EventType = "REQUEST_TIME"
 	SEND_TIME_TO_SERVER EventType = "SEND_TIME_TO_SERVER"
 )
 
 type EventMetaData struct {
-	ActionFrom     string
-	UsersConnected int
-	RoomID         string
+	ActionFrom     string `json:"actionFrom"`
+	UsersConnected int    `json:"usersConnected"`
+	RoomID         string `json:"roomID"`
 }
 
 func HandleActionEvent(rawMsg []byte, u *User) {
@@ -35,7 +37,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 	eventType, data := unmarshalSocketMessage(rawMsg)
 	itemsInPlaylist := len(Instance.RoomsPlaylist[u.RoomID]) > 0
 
-	meta := EventMetaData{u.Name, Instance.getRoomPop(u.RoomID), u.RoomID}
+	meta := EventMetaData{u.Name, GetRoomPop(u.RoomID), u.RoomID}
 
 	switch eventType {
 	case REQUEST:
@@ -62,6 +64,12 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 
 			u.broadcastMessage(SocketMessage{"PLAY_VIDEO", currVid, meta})
 		}
+	case USER_JOINED:
+		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		u.broadcastMessage(SocketMessage{"USER_JOINED", currVid, meta})
+	case USER_DISCONNECTED:
+		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		u.broadcastMessage(SocketMessage{"USER_DISCONNECTED", currVid, meta})
 	case REQUEST_TIME:
 		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 		u.broadcastMessage(SocketMessage{"SEND_TIME_TO_SERVER", currVid, meta})
