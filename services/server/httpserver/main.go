@@ -14,15 +14,10 @@ import (
 	"github.com/rs/cors"
 )
 
-var envVars = env.ParseEnv()
-
-// Server struct
 type Server struct {
 	Router *mux.Router
-	// Logger *provider.Logger
 }
 
-// New creates a new http server instance
 func New() (*Server, error) {
 	r := mux.NewRouter()
 	s := &Server{
@@ -38,7 +33,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.Router.ServeHTTP(w, r)
 }
 
-// Run the server instance
 func (s *Server) Run() {
 	stop := make(chan os.Signal, 1)
 
@@ -49,7 +43,7 @@ func (s *Server) Run() {
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
 	})
 
-	port := ":" + envVars.Port
+	port := ":" + env.Vars.Port
 
 	h := &http.Server{
 		Addr:         port,
