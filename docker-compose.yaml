@@ -12,6 +12,10 @@ services:
       - /app/node_modules
       - ./services/client:/app
   server:
-    build: services/server
+    # Hot-reaload for GO thanks to https://github.com/cosmtrek/air
+    image: cosmtrek/air
+    working_dir: /services/server
     ports:
       - "8080:8080"
+    volumes:
+      - ./services/server/:/services/server
