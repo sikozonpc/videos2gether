@@ -32,7 +32,7 @@ var Instance = Hub{
 }
 
 func (h *Hub) Run() {
-	log.Logger.Info("[HUB] started")
+	log.Logger.Info("Hub: started")
 
 	for {
 		select {
@@ -68,7 +68,7 @@ func (h *Hub) connectUser(u *User) {
 		"user":     u.Name,
 		"room":     u.RoomID,
 		"room_len": len(h.Connections[u.RoomID]),
-	}).Info("[HUB] Client joined room")
+	}).Info("Hub: Client has joined room")
 }
 
 func (h *Hub) disconnectUser(u *User) {
@@ -78,7 +78,7 @@ func (h *Hub) disconnectUser(u *User) {
 		"user":     u.Name,
 		"room":     u.RoomID,
 		"room_len": len(h.Connections[u.RoomID]),
-	}).Info("[HUB] User disconnected")
+	}).Info("Hub: User has disconnected")
 }
 
 func (h *Hub) handleDisconnectUser(u *User) {
@@ -101,7 +101,7 @@ func (h *Hub) removeRoom(roomID string) {
 
 	log.Logger.WithFields(logrus.Fields{
 		"room": roomID,
-	}).Info("[HUB] Room deleted")
+	}).Info("Hub: Room got deleted")
 }
 
 func (h *Hub) broadcast(msg Message) {

@@ -17,8 +17,10 @@ export const useRoom = () => {
 
   const [videoData, setVideoData] = useState<VideoData>(initialVideoData);
   const [isMediaReady, setMediaReady] = useState(false);
-  const [playlist, setPlaylist] = useState<string[]>([]);
+  const [playlist, setPlaylist] = useState<VideoData[]>([]);
   const [synced, setSynced] = useState(false);
+  const [userName, setUsername] = useState('');
+  const [usersConnected, setUsersConnected] = useState(0);
   const stateRef = useRef<VideoData>();
 
   const { roomID } = useParams<{ roomID: string }>();
@@ -26,7 +28,9 @@ export const useRoom = () => {
   stateRef.current = videoData;
 
   const getPlaylist = useCallback(async () => {
-    const { data } = await axios.get<string[]>(`${API_URL}/room/${roomID}/playlist`);
+    const { data } = (await axios.get<string[]>(`${API_URL}/room/${roomID}/playlist`)) as {
+      data: VideoData[],
+    };
     if (!data) return;
 
     setPlaylist(data);
@@ -57,6 +61,8 @@ export const useRoom = () => {
       return;
     }
 
+    setUsersConnected(res.metadata?.usersConnected);
+
     switch (action) {
       case ActionType.REQUEST: {
         (async () => getPlaylist())()
@@ -71,6 +77,10 @@ export const useRoom = () => {
         return
       }
 
+      case ActionType.USER_DISCONNECTED:
+      case ActionType.USER_JOINED: {
+        return;
+      }
       case ActionType.SEND_TIME_TO_SERVER: {
         if (!res.data || videoData.time === 0) return
 
@@ -94,10 +104,11 @@ export const useRoom = () => {
       }
 
       case ActionType.SYNC: {
-        if (!res.data || !res.data.url) return
+        setUsername(res.metadata.actionFrom);
+        console.log("Client username: ", res.metadata.actionFrom)
+        syncVideoWithServer(res.data);
 
-        (async () => getPlaylist())()
-        syncVideoWithServer(res.data)
+        if (!res.data.url) return
         seekVideo(res.data.time)
         return
       }
@@ -125,25 +136,9 @@ export const useRoom = () => {
   useEffect(() => {
     if (!roomID || synced) return;
 
-    // sendMessage({ action: ActionType.SYNC, data: { roomID } });
     sendMessage({ action: ActionType.REQUEST_TIME, data: { roomID } });
     setSynced(true);
   }, [roomID, sendMessage, synced])
-
-  /* TODO: Think better on how to sync new joiners to the room
-     useInterval(() => {
-      if (videoData.playing) {
-        console.log('HERE', videoData);
-        sendMessage({
-          action: ActionType.HEARTH_BEAT,
-          data: {
-            time: playerRef?.current?.getCurrentTime() || 0,
-            url: videoData.url,
-            playing: true,
-          }
-        });
-      }
-    }, 2000); */
 
   const handleRequestVideo = (url: string) => {
     sendMessage({
@@ -187,6 +182,8 @@ export const useRoom = () => {
   }
 
   const handleSeek = () => {
+    if (!playerRef?.current) return;
+
     sendMessage({
       action: ActionType.PLAY_VIDEO,
       data: {
@@ -209,6 +206,8 @@ export const useRoom = () => {
   }
 
   return {
+    usersConnected,
+    userName,
     isMediaReady,
     videoData,
     playerRef,

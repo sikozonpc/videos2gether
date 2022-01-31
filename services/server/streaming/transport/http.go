@@ -2,7 +2,6 @@ package transport
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"streamserver/responses"
 	"streamserver/streaming"
@@ -37,8 +36,6 @@ func (h *HTTP) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusConflict, err)
 		return
 	}
-
-	log.Println((rd))
 
 	if rd.ID == "" {
 		responses.JSON(w, http.StatusConflict, rd)

@@ -21,20 +21,25 @@ const Playlist: React.FC<Props> = ({ videosUrls, className, ...rest }) => {
   };
 
   return (
-    <div className={classnames('p-1.5 h-screen overflow-y-auto', className)} {...rest}>
-      {hasVideos && <h3>Playlist</h3>}
+    <div className={classnames('w-full flex flex-row overflow-x-scroll md:max-w-screen-md lg:max-w-screen-2xl h-40 bg-black', className)} {...rest}>
+      {!hasVideos && <p className='w-full text-sm text-gray-200 text-center pt-20'>
+        Add a video to the playlist to start watching
+      </p>}
 
       {videosUrls.map((video, index) => {
         const isCurrentPlaying = index === 0;
 
         return (
           <div
-            className='h-32 w-full overflow-hidden mb-2.5'
-            style={isCurrentPlaying ? currentStyles : {}}
+            className='w-full h-40 mr-5'
+            style={{
+              ...(isCurrentPlaying ? currentStyles : {}),
+              minWidth: 200,
+            }}
             key={index}
           >
             <ReactPlayer
-              url={video}
+              url={video.url}
               light
               controls={false}
               playIcon={<div />}
