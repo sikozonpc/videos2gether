@@ -10,6 +10,7 @@ const Room: React.FC<Props> = () => {
   const {
     isMediaReady, playerRef, videoData, playlist, usersConnected,
     handleMediaReady, handlePause, handlePlay, handleSeek, handleRequestVideo, handleMediaEnd,
+    handleSkipVideo,
   } = useRoom()
 
   const onVideoRequestClick = () => {
@@ -67,6 +68,7 @@ const Room: React.FC<Props> = () => {
           <Playlist
             className='mt-6 list-none'
             videosUrls={playlist}
+            onSkipClick={handleSkipVideo}
           />
         </div>
       </div>

@@ -14,6 +14,7 @@ const (
 	REQUEST             EventType = "REQUEST"
 	PLAY_VIDEO          EventType = "PLAY_VIDEO"
 	PAUSE_VIDEO         EventType = "PAUSE_VIDEO"
+	SKIP_VIDEO          EventType = "SKIP_VIDEO"
 	END_VIDEO           EventType = "END_VIDEO"
 	SYNC                EventType = "SYNC"
 	USER_JOINED         EventType = "USER_JOINED"
@@ -85,6 +86,11 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 
 			u.broadcastMessage(SocketMessage{"PAUSE_VIDEO", currVid, meta})
 		}
+	case SKIP_VIDEO:
+		Instance.RoomsPlaylist[u.RoomID] = Instance.RoomsPlaylist[u.RoomID].Dequeue()
+		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		
+		u.broadcastMessage(SocketMessage{"SKIP_VIDEO", currVid, meta})
 	case SYNC:
 		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
 		u.broadcastMessage(SocketMessage{"SYNC", currVid, meta})

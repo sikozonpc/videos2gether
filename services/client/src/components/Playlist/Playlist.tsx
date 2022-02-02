@@ -13,7 +13,12 @@ const YT_VARS = {
   },
 }
 
-const Playlist: React.FC<Props> = ({ videosUrls, className, ...rest }) => {
+const Playlist: React.FC<Props> = ({
+  videosUrls,
+  className,
+  onSkipClick,
+  ...rest
+}) => {
   const hasVideos = Array.isArray(videosUrls) && videosUrls.length > 0
 
   const currentStyles: React.CSSProperties = {
@@ -31,7 +36,7 @@ const Playlist: React.FC<Props> = ({ videosUrls, className, ...rest }) => {
 
         return (
           <div
-            className='w-full h-40 mr-5'
+            className='relative w-full h-40 mr-5'
             style={{
               ...(isCurrentPlaying ? currentStyles : {}),
               minWidth: 200,
@@ -48,6 +53,14 @@ const Playlist: React.FC<Props> = ({ videosUrls, className, ...rest }) => {
               playing={false}
               config={YT_VARS}
             />
+            {isCurrentPlaying && (
+              <div
+                className='text-white text-xl absolute top-1/2 left-1/2 bg-slate-700 p-2 rounded cursor-pointer'
+                onClick={onSkipClick}
+              >
+                {videosUrls.length === 1 ? "End video" : "Skip"}
+              </div>
+            )}
           </div>
         )
       })}

@@ -50,6 +50,7 @@ export const useRoom = () => {
     console.warn("Failed to seek", videoData)
   }
 
+  // FIXME: The listener does not update if variables
   const messageListener = (ev: MessageEvent) => {
     const res = JSON.parse(ev.data);
     console.log(JSON.parse(ev.data));
@@ -121,6 +122,14 @@ export const useRoom = () => {
         return
       }
 
+      case ActionType.SKIP_VIDEO: {
+        if (!res.data) return
+
+        (async () => getPlaylist())()
+        syncVideoWithServer(res.data)
+        return
+      }
+
       case ActionType.PAUSE_VIDEO: {
         if (!res.data) return
         syncVideoWithServer(res.data)
@@ -131,7 +140,7 @@ export const useRoom = () => {
     }
   }
 
-  const { sendMessage } = useWebsocket(`${WS_URL}/ws/${roomID}`, messageListener)
+  const { sendMessage } = useWebsocket(`${WS_URL}/ws/${roomID}`, messageListener);
 
   useEffect(() => {
     if (!roomID || synced) return;
@@ -171,9 +180,21 @@ export const useRoom = () => {
   const handlePause = () => {
     if (!playerRef?.current) return;
 
-    console.log('SEND')
     sendMessage({
       action: ActionType.PAUSE_VIDEO,
+      data: {
+        url: videoData.url,
+        playing: false,
+      }
+    });
+  }
+
+
+  const handleSkipVideo = () => {
+    if (!playerRef?.current) return;
+
+    sendMessage({
+      action: ActionType.SKIP_VIDEO,
       data: {
         url: videoData.url,
         playing: false,
@@ -220,5 +241,6 @@ export const useRoom = () => {
     handlePlay,
     handleRequestVideo,
     syncVideoWithServer,
+    handleSkipVideo,
   }
 }
