@@ -8,9 +8,8 @@ import (
 	streamingTransport "streamserver/streaming/transport"
 )
 
-// Run the http server
 func Run() {
-	go hub.Instance.Run()
+	go hub.Instance.Listen()
 
 	s, err := httpserver.New()
 	if err != nil {

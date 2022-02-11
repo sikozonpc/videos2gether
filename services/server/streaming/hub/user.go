@@ -105,7 +105,7 @@ func (u *User) broadcastMessage(msg SocketMessage) {
 // Sync the user to the user with all of the initial data needed
 // Should be called after he joins a channel.
 func (u *User) syncToRoom() {
-	currVideo := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+	currVideo, _ := GetCurrentVideo(u.RoomID)
 	meta := EventMetaData{u.Name, GetRoomPop(u.RoomID) + 1, u.RoomID}
 
 	msg := SocketMessage{"SYNC", currVideo, meta}

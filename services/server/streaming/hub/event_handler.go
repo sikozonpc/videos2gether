@@ -35,64 +35,109 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 		"user": u.Name,
 	})
 
+	p, err := GetRoomPlaylist(u.RoomID)
+	if err != nil {
+		return
+	}
+
 	eventType, data := unmarshalSocketMessage(rawMsg)
-	itemsInPlaylist := len(Instance.RoomsPlaylist[u.RoomID]) > 0
+	hasVideos := len(p) > 0
 
 	meta := EventMetaData{u.Name, GetRoomPop(u.RoomID), u.RoomID}
 
 	switch eventType {
 	case REQUEST:
 		// TODO: Proper validate if it's a valid youtube video
-		Instance.RoomsPlaylist[u.RoomID] = Instance.RoomsPlaylist[u.RoomID].Enqueue(VideoData{
+
+		newVid := VideoData{
 			Time:    0,
 			Playing: true,
 			Url:     data.Url,
-		})
+		}
 
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		err := AddVideoToPlaylist(u.RoomID, newVid)
+		if err != nil {
+			panic(err)
+		}
+
 		// TODO: Validate if END_VIDEO should be sent here?
-		u.broadcastMessage(SocketMessage{"END_VIDEO", currVid, meta})
+		u.broadcastMessage(SocketMessage{"END_VIDEO", newVid, meta})
 
 	case END_VIDEO:
-		Instance.RoomsPlaylist[u.RoomID] = Instance.RoomsPlaylist[u.RoomID].Dequeue()
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		ShiftPlaylistVideo(u.RoomID)
+		up, err := GetRoomPlaylist(u.RoomID)
+		if err != nil {
+			log.Logger.Fatal(err)
+		}
 
-		u.broadcastMessage(SocketMessage{"END_VIDEO", currVid, meta})
+		if len(up) == 0 {
+			u.broadcastMessage(SocketMessage{"END_VIDEO", VideoData{}, meta})
+		} else {
+			u.broadcastMessage(SocketMessage{"END_VIDEO", up[0], meta})
+		}
 	case PLAY_VIDEO:
-		if itemsInPlaylist {
-			currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
-			currVid.Update(VideoData{currVid.Url, data.Time, true})
+		if hasVideos {
+			currVid := p[0]
 
-			u.broadcastMessage(SocketMessage{"PLAY_VIDEO", currVid, meta})
+			UpdateVideo(u.RoomID, 0, VideoData{currVid.Url, data.Time, true})
+
+			up, err := GetRoomPlaylist(u.RoomID)
+			if err != nil {
+				log.Logger.Fatal(err)
+			}
+
+			if len(up) == 0 {
+				u.broadcastMessage(SocketMessage{"PLAY_VIDEO", VideoData{}, meta})
+			} else {
+				u.broadcastMessage(SocketMessage{"PLAY_VIDEO", up[0], meta})
+			}
 		}
 	case USER_JOINED:
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		currVid := p[0]
 		u.broadcastMessage(SocketMessage{"USER_JOINED", currVid, meta})
 	case USER_DISCONNECTED:
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		currVid := p[0]
 		u.broadcastMessage(SocketMessage{"USER_DISCONNECTED", currVid, meta})
 	case REQUEST_TIME:
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		currVid := p[0]
 		u.broadcastMessage(SocketMessage{"SEND_TIME_TO_SERVER", currVid, meta})
 	case SEND_TIME_TO_SERVER:
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		currVid := p[0]
 		currVid.Update(VideoData{currVid.Url, data.Time, true})
 
 		u.broadcastMessage(SocketMessage{"SYNC", currVid, meta})
 	case PAUSE_VIDEO:
-		if itemsInPlaylist {
-			currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
-			currVid.Update(VideoData{currVid.Url, data.Time, false})
+		if hasVideos {
+			currVid := p[0]
 
-			u.broadcastMessage(SocketMessage{"PAUSE_VIDEO", currVid, meta})
+			UpdateVideo(u.RoomID, 0, VideoData{currVid.Url, data.Time, false})
+
+			up, err := GetRoomPlaylist(u.RoomID)
+			if err != nil {
+				log.Logger.Fatal(err)
+			}
+
+			if len(up) == 0 {
+				u.broadcastMessage(SocketMessage{"PAUSE_VIDEO", VideoData{}, meta})
+			} else {
+				u.broadcastMessage(SocketMessage{"PAUSE_VIDEO", up[0], meta})
+			}
 		}
 	case SKIP_VIDEO:
-		Instance.RoomsPlaylist[u.RoomID] = Instance.RoomsPlaylist[u.RoomID].Dequeue()
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
-		
-		u.broadcastMessage(SocketMessage{"SKIP_VIDEO", currVid, meta})
+		ShiftPlaylistVideo(u.RoomID)
+
+		up, err := GetRoomPlaylist(u.RoomID)
+		if err != nil {
+			log.Logger.Fatal(err)
+		}
+
+		if len(up) == 0 {
+			u.broadcastMessage(SocketMessage{"SKIP_VIDEO", VideoData{}, meta})
+		} else {
+			u.broadcastMessage(SocketMessage{"SKIP_VIDEO", up[0], meta})
+		}
 	case SYNC:
-		currVid := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
+		currVid := p[0]
 		u.broadcastMessage(SocketMessage{"SYNC", currVid, meta})
 	default:
 		logger.Printf("No valid action sent from Client, ACTION: %v \n", eventType)
@@ -101,7 +146,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 	logger.WithFields(logrus.Fields{
 		"action":        eventType,
 		"data":          data,
-		"curr_playlist": Instance.RoomsPlaylist[u.RoomID],
+		"curr_playlist": p,
 	}).Info("[EVENT_HANDLER] Event log")
 }
 
