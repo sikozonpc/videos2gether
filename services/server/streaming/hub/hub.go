@@ -43,33 +43,33 @@ func (h *Hub) Listen() {
 	}
 }
 
-func GetRoomPop(id string) int {
+func GetRoomConnections(id string) int {
 	return len(Instance.Connections[id])
 }
 
 func (h *Hub) connectUser(u *User) {
-	roomExists := CheckIfRoomExists(u.RoomID)
+	roomExists := u.Room.checkIfExists()
 	if !roomExists {
 		log.Logger.WithFields(logrus.Fields{
 			"user":     u.Name,
-			"room":     u.RoomID,
-			"room_len": len(h.Connections[u.RoomID]),
+			"room":     u.Room.Id,
+			"room_len": len(h.Connections[u.Room.Id]),
 		}).Info("[Hub] Client tried to join room that does not exist")
 		return
 	}
 
-	currRoomConnections := h.Connections[u.RoomID]
+	currRoomConnections := h.Connections[u.Room.Id]
 	if currRoomConnections == nil {
 		currRoomConnections = make(map[*Connection]bool)
-		h.Connections[u.RoomID] = currRoomConnections
+		h.Connections[u.Room.Id] = currRoomConnections
 	}
 
-	h.Connections[u.RoomID][u.Conn] = true
+	h.Connections[u.Room.Id][u.Conn] = true
 
 	log.Logger.WithFields(logrus.Fields{
 		"user":     u.Name,
-		"room":     u.RoomID,
-		"room_len": len(h.Connections[u.RoomID]),
+		"room":     u.Room.Id,
+		"room_len": len(h.Connections[u.Room.Id]),
 	}).Info("[Hub] Client has joined room")
 }
 
@@ -78,20 +78,20 @@ func (h *Hub) disconnectUser(u *User) {
 
 	log.Logger.WithFields(logrus.Fields{
 		"user":     u.Name,
-		"room":     u.RoomID,
-		"room_len": len(h.Connections[u.RoomID]),
+		"room":     u.Room.Id,
+		"room_len": len(h.Connections[u.Room.Id]),
 	}).Info("[Hub] User has disconnected")
 }
 
 func (h *Hub) handleDisconnectUser(u *User) {
-	connections := h.Connections[u.RoomID]
+	connections := h.Connections[u.Room.Id]
 	if connections != nil {
 		if _, ok := connections[u.Conn]; ok {
 			delete(connections, u.Conn)
 			h.disconnectUser(u)
 
 			if len(connections) == 0 {
-				h.removeRoomConnections(u.RoomID)
+				h.removeRoomConnections(u.Room.Id)
 			}
 		}
 	}

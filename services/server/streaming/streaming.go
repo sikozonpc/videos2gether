@@ -6,7 +6,7 @@ import (
 )
 
 func (s Socket) CreateRoom(id string) (*RoomData, error) {
-	err := hub.CreateRoomPlaylist(id)
+	err := hub.Create(id)
 	if err != nil {
 		return nil, fmt.Errorf("room already exists")
 	}
@@ -15,6 +15,6 @@ func (s Socket) CreateRoom(id string) (*RoomData, error) {
 }
 
 func (s Socket) GetRoomPlaylist(roomId string) (hub.Playlist, error) {
-	p, err := hub.GetRoomPlaylist(roomId)
+	p, err := hub.Get(roomId)
 	return p, err
 }

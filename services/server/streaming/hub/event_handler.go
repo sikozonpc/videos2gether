@@ -31,11 +31,11 @@ type EventMetaData struct {
 
 func HandleActionEvent(rawMsg []byte, u *User) {
 	logger := log.Logger.WithFields(logrus.Fields{
-		"room": u.RoomID,
+		"room": u.Room.Id,
 		"user": u.Name,
 	})
 
-	p, err := GetRoomPlaylist(u.RoomID)
+	p, err := u.Room.getPlaylist()
 	if err != nil {
 		return
 	}
@@ -43,7 +43,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 	eventType, data := unmarshalSocketMessage(rawMsg)
 	hasVideos := len(p) > 0
 
-	meta := EventMetaData{u.Name, GetRoomPop(u.RoomID), u.RoomID}
+	meta := EventMetaData{u.Name, GetRoomConnections(u.Room.Id), u.Room.Id}
 
 	switch eventType {
 	case REQUEST:
@@ -55,7 +55,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 			Url:     data.Url,
 		}
 
-		err := AddVideoToPlaylist(u.RoomID, newVid)
+		err := u.Room.addVideoToPlaylist(newVid)
 		if err != nil {
 			panic(err)
 		}
@@ -64,8 +64,8 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 		u.broadcastMessage(SocketMessage{"END_VIDEO", newVid, meta})
 
 	case END_VIDEO:
-		ShiftPlaylistVideo(u.RoomID)
-		up, err := GetRoomPlaylist(u.RoomID)
+		u.Room.shiftPlaylistVideo()
+		up, err := u.Room.getPlaylist()
 		if err != nil {
 			log.Logger.Fatal(err)
 		}
@@ -79,9 +79,9 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 		if hasVideos {
 			currVid := p[0]
 
-			UpdateVideo(u.RoomID, 0, VideoData{currVid.Url, data.Time, true})
+			u.Room.updateVideo(0, VideoData{currVid.Url, data.Time, true})
 
-			up, err := GetRoomPlaylist(u.RoomID)
+			up, err := u.Room.getPlaylist()
 			if err != nil {
 				log.Logger.Fatal(err)
 			}
@@ -110,9 +110,9 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 		if hasVideos {
 			currVid := p[0]
 
-			UpdateVideo(u.RoomID, 0, VideoData{currVid.Url, data.Time, false})
+			u.Room.updateVideo(0, VideoData{currVid.Url, data.Time, false})
 
-			up, err := GetRoomPlaylist(u.RoomID)
+			up, err := u.Room.getPlaylist()
 			if err != nil {
 				log.Logger.Fatal(err)
 			}
@@ -124,9 +124,9 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 			}
 		}
 	case SKIP_VIDEO:
-		ShiftPlaylistVideo(u.RoomID)
+		u.Room.shiftPlaylistVideo()
 
-		up, err := GetRoomPlaylist(u.RoomID)
+		up, err := u.Room.getPlaylist()
 		if err != nil {
 			log.Logger.Fatal(err)
 		}
