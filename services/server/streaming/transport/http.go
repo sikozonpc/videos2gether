@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"streamserver/responses"
 	"streamserver/streaming"
-	"streamserver/streaming/hub"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -58,13 +57,11 @@ func (h *HTTP) handleGetRoomPlaylist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roomExists := hub.CheckRoomAvailability(roomID)
-	if !roomExists {
-		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("room does not exist"))
+	playlist, err := h.svc.GetRoomPlaylist(roomID)
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, fmt.Errorf("room does not exist"))
 		return
 	}
-
-	playlist := h.svc.GetRoomPlaylist(roomID)
 
 	responses.JSON(w, http.StatusOK, playlist)
 }

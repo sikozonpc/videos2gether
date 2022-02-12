@@ -10,8 +10,8 @@ import (
 )
 
 type User struct {
-	Name   string
-	RoomID string
+	Name string
+	Room Room
 
 	Conn *Connection
 }
@@ -33,11 +33,11 @@ func (u *User) StartReading() {
 	c := u.Conn
 
 	logger := log.Logger.WithFields(logrus.Fields{
-		"room": u.RoomID,
+		"room": u.Room.Id,
 	})
 
 	defer func() {
-		meta := EventMetaData{u.Name, GetRoomPop(u.RoomID) - 1, u.RoomID}
+		meta := EventMetaData{u.Name, GetRoomConnections(u.Room.Id) - 1, u.Room.Id}
 		u.broadcastMessage(SocketMessage{"USER_DISCONNECTED", VideoData{}, meta})
 
 		Instance.Disconnect <- *u
@@ -98,15 +98,15 @@ func (u *User) broadcastMessage(msg SocketMessage) {
 		panic(err)
 	}
 
-	m := Message{marshalled, u.RoomID}
+	m := Message{marshalled, u.Room.Id}
 	Instance.Broadcast <- m
 }
 
 // Sync the user to the user with all of the initial data needed
 // Should be called after he joins a channel.
 func (u *User) syncToRoom() {
-	currVideo := Instance.RoomsPlaylist[u.RoomID].GetCurrent()
-	meta := EventMetaData{u.Name, GetRoomPop(u.RoomID) + 1, u.RoomID}
+	currVideo, _ := u.Room.getCurrentVideo()
+	meta := EventMetaData{u.Name, GetRoomConnections(u.Room.Id) + 1, u.Room.Id}
 
 	msg := SocketMessage{"SYNC", currVideo, meta}
 	u.Conn.WS.WriteJSON(msg)

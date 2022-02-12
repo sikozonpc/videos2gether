@@ -1,5 +1,7 @@
 package hub
 
+import "encoding/json"
+
 type VideoData struct {
 	Url     string  `json:"url"`
 	Time    float32 `json:"time"`
@@ -12,4 +14,16 @@ func (v *VideoData) Update(d VideoData) {
 	v.Playing = d.Playing
 	v.Time = d.Time
 	v.Url = d.Url
+}
+
+func unmarshalVideo(marshalled interface{}) VideoData {
+	res := VideoData{}
+	bytes, _ := marshalled.([]byte)
+
+	err := json.Unmarshal(bytes, &res)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
 }

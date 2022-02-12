@@ -185,6 +185,7 @@ export const useRoom = () => {
       data: {
         url: videoData.url,
         playing: false,
+        time: playerRef.current.getCurrentTime() || 0,
       }
     });
   }

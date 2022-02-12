@@ -16,23 +16,20 @@ type Hub struct {
 	Connect (chan User)
 	// Disconnect requests from connections.
 	Disconnect (chan User)
-	// RoomsData is the rooms state data
-	RoomsPlaylist map[string]Playlist
 	// Connections are a map of connected clients for each room
 	Connections map[string]map[*Connection]bool
 }
 
 // Instance is the global Hub instance that manages the holds the application state
 var Instance = Hub{
-	Broadcast:     make(chan Message),
-	Connect:       make(chan User),
-	Disconnect:    make(chan User),
-	Connections:   make(map[string]map[*Connection]bool),
-	RoomsPlaylist: make(map[string]Playlist),
+	Broadcast:   make(chan Message),
+	Connect:     make(chan User),
+	Disconnect:  make(chan User),
+	Connections: make(map[string]map[*Connection]bool),
 }
 
-func (h *Hub) Run() {
-	log.Logger.Info("Hub: started")
+func (h *Hub) Listen() {
+	log.Logger.Info("[Hub] is listening")
 
 	for {
 		select {
@@ -46,29 +43,34 @@ func (h *Hub) Run() {
 	}
 }
 
-func CheckRoomAvailability(id string) bool {
-	connections := Instance.Connections[id]
-	return len(connections) > 0
-}
-
-func GetRoomPop(id string) int {
+func GetRoomConnections(id string) int {
 	return len(Instance.Connections[id])
 }
 
 func (h *Hub) connectUser(u *User) {
-	currRoomConnections := h.Connections[u.RoomID]
-	if currRoomConnections == nil {
-		currRoomConnections = make(map[*Connection]bool)
-		h.Connections[u.RoomID] = currRoomConnections
+	roomExists := u.Room.checkIfExists()
+	if !roomExists {
+		log.Logger.WithFields(logrus.Fields{
+			"user":     u.Name,
+			"room":     u.Room.Id,
+			"room_len": len(h.Connections[u.Room.Id]),
+		}).Info("[Hub] Client tried to join room that does not exist")
+		return
 	}
 
-	h.Connections[u.RoomID][u.Conn] = true
+	currRoomConnections := h.Connections[u.Room.Id]
+	if currRoomConnections == nil {
+		currRoomConnections = make(map[*Connection]bool)
+		h.Connections[u.Room.Id] = currRoomConnections
+	}
+
+	h.Connections[u.Room.Id][u.Conn] = true
 
 	log.Logger.WithFields(logrus.Fields{
 		"user":     u.Name,
-		"room":     u.RoomID,
-		"room_len": len(h.Connections[u.RoomID]),
-	}).Info("Hub: Client has joined room")
+		"room":     u.Room.Id,
+		"room_len": len(h.Connections[u.Room.Id]),
+	}).Info("[Hub] Client has joined room")
 }
 
 func (h *Hub) disconnectUser(u *User) {
@@ -76,32 +78,31 @@ func (h *Hub) disconnectUser(u *User) {
 
 	log.Logger.WithFields(logrus.Fields{
 		"user":     u.Name,
-		"room":     u.RoomID,
-		"room_len": len(h.Connections[u.RoomID]),
-	}).Info("Hub: User has disconnected")
+		"room":     u.Room.Id,
+		"room_len": len(h.Connections[u.Room.Id]),
+	}).Info("[Hub] User has disconnected")
 }
 
 func (h *Hub) handleDisconnectUser(u *User) {
-	connections := h.Connections[u.RoomID]
+	connections := h.Connections[u.Room.Id]
 	if connections != nil {
 		if _, ok := connections[u.Conn]; ok {
 			delete(connections, u.Conn)
 			h.disconnectUser(u)
 
 			if len(connections) == 0 {
-				h.removeRoom(u.RoomID)
+				h.removeRoomConnections(u.Room.Id)
 			}
 		}
 	}
 }
 
-func (h *Hub) removeRoom(roomID string) {
-	delete(h.RoomsPlaylist, roomID)
+func (h *Hub) removeRoomConnections(roomID string) {
 	delete(h.Connections, roomID)
 
 	log.Logger.WithFields(logrus.Fields{
 		"room": roomID,
-	}).Info("Hub: Room got deleted")
+	}).Info("[Hub] Room connections got deleted")
 }
 
 func (h *Hub) broadcast(msg Message) {
@@ -115,7 +116,7 @@ func (h *Hub) broadcast(msg Message) {
 			delete(roomConns, c)
 
 			if len(roomConns) == 0 {
-				h.removeRoom(msg.RoomID)
+				h.removeRoomConnections(msg.RoomID)
 			}
 		}
 	}

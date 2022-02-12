@@ -6,14 +6,15 @@ import (
 )
 
 func (s Socket) CreateRoom(id string) (*RoomData, error) {
-	roomExists := hub.CheckRoomAvailability(id)
-	if roomExists {
+	err := hub.Create(id)
+	if err != nil {
 		return nil, fmt.Errorf("room already exists")
 	}
 
 	return &RoomData{ID: id}, nil
 }
 
-func (s Socket) GetRoomPlaylist(roomID string) hub.Playlist {
-	return hub.Instance.RoomsPlaylist[roomID]
+func (s Socket) GetRoomPlaylist(roomId string) (hub.Playlist, error) {
+	p, err := hub.Get(roomId)
+	return p, err
 }
