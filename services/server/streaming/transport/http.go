@@ -18,8 +18,8 @@ type HTTP struct {
 func NewHTTP(svc streaming.Service, r *mux.Router) {
 	h := HTTP{svc}
 
-	r.HandleFunc("/health", h.getHealth).Methods("GET")
 	r.HandleFunc("/room", h.handleCreateRoom).Methods("GET")
+	r.HandleFunc("/room/{roomID}", h.handleDeleteRoom).Methods("DELETE")
 	r.HandleFunc("/room/{roomID}/playlist", h.handleGetRoomPlaylist).Methods("GET")
 }
 
@@ -44,7 +44,22 @@ func (h *HTTP) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, rd)
 }
 
-func (h *HTTP) getHealth(w http.ResponseWriter, r *http.Request) {
+func (h *HTTP) handleDeleteRoom(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	roomId := params["roomID"]
+
+	_, err := h.svc.GetRoomPlaylist(roomId)
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, fmt.Errorf("room does not exist"))
+		return
+	}
+
+	err = h.svc.DeleteRoom(roomId)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, fmt.Errorf("room cannot be deleted"))
+		return
+	}
+
 	responses.JSON(w, http.StatusOK, "ok")
 }
 

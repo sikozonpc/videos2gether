@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { VideoData } from "../screens/room/types"
 import ReactPlayer from "react-player"
 import useWebsocket, { ActionType } from "hooks/useWebsocket"
-import { useParams } from "react-router"
+import { useHistory, useParams } from "react-router"
 import axios from "axios"
 import { WS_URL, API_URL } from "config"
 
@@ -14,6 +14,8 @@ const initialVideoData = {
 
 export const useRoom = () => {
   const playerRef = useRef<ReactPlayer | null>(null);
+
+  const history = useHistory();
 
   const [videoData, setVideoData] = useState<VideoData>(initialVideoData);
   const [isMediaReady, setMediaReady] = useState(false);
@@ -28,13 +30,18 @@ export const useRoom = () => {
   stateRef.current = videoData;
 
   const getPlaylist = useCallback(async () => {
-    const { data } = (await axios.get<string[]>(`${API_URL}/room/${roomID}/playlist`)) as {
-      data: VideoData[],
-    };
-    if (!data) return;
+    try {
+      const { data } = (await axios.get<string[]>(`${API_URL}/room/${roomID}/playlist`)) as {
+        data: VideoData[],
+      };
 
-    setPlaylist(data);
-  }, [roomID])
+      if (!data) return;
+
+      setPlaylist(data);
+    } catch (error) {
+      history.push('/')
+    }
+  }, [history, roomID])
 
 
   useEffect(() => {

@@ -18,3 +18,7 @@ func (s Socket) GetRoomPlaylist(roomId string) (hub.Playlist, error) {
 	p, err := hub.Get(roomId)
 	return p, err
 }
+
+func (s Socket) DeleteRoom(roomId string) error {
+	return hub.Delete(roomId)
+}

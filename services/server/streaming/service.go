@@ -10,6 +10,7 @@ func Initialize() Socket {
 // Service represents auth service interface
 type Service interface {
 	CreateRoom(id string) (*RoomData, error)
+	DeleteRoom(id string) error
 	GetRoomPlaylist(roomID string) (hub.Playlist, error)
 }
 
