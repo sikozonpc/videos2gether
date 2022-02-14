@@ -22,3 +22,7 @@ func (s Socket) GetRoomPlaylist(roomId string) (hub.Playlist, error) {
 func (s Socket) DeleteRoom(roomId string) error {
 	return hub.Delete(roomId)
 }
+
+func (s Socket) CleanAllRooms() {
+	hub.Flush()
+}

@@ -38,6 +38,10 @@ func Get(roomId string) (Playlist, error) {
 	return up, nil
 }
 
+func Flush() {
+	_redis.FlushAll()
+}
+
 func (r *Room) checkIfExists() bool {
 	_, err := _redis.Client.JSONGet(r.Id, ".")
 	switch {

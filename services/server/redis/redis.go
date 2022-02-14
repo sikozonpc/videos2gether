@@ -32,10 +32,17 @@ func Connect() {
 	}
 }
 
-func Close() {
+func FlushAll() {
 	if err := rdb.FlushAll().Err(); err != nil {
 		log.Logger.Fatalf("[Redis] - failed to flush: %v", err)
 	}
+
+	log.Logger.Info("[Redis] flushed")
+}
+
+func Close() {
+	FlushAll()
+
 	if err := rdb.Close(); err != nil {
 		log.Logger.Fatalf("[Redis] - failed to communicate to redis-server: %v", err)
 	}

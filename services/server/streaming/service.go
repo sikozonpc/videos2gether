@@ -12,6 +12,7 @@ type Service interface {
 	CreateRoom(id string) (*RoomData, error)
 	DeleteRoom(id string) error
 	GetRoomPlaylist(roomID string) (hub.Playlist, error)
+	CleanAllRooms()
 }
 
 // Socket represents streaming application service

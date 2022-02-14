@@ -19,6 +19,7 @@ services:
       - "8080:8080"
     environment:
       - REDIS_ADDR=redis:6379
+      - API_KEY=random
     links:
       - redis
     depends_on:

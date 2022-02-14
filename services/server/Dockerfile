@@ -5,6 +5,7 @@ ENV PORT "8080"
 ENV ADDR "0.0.0.0"
 ENV REDIS_ADDR "localhost:6379"
 ENV REDIS_PW ""
+ENV API_KEY ""
 
 WORKDIR /app
 COPY go.mod go.sum ./
