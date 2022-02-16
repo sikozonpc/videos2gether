@@ -2,6 +2,7 @@ package hub
 
 import (
 	"encoding/json"
+	"strings"
 
 	"streamserver/log"
 
@@ -47,20 +48,20 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 
 	switch eventType {
 	case REQUEST:
-		// TODO: Proper validate if it's a valid youtube video
+		if strings.Contains(data.Url, "https://") {
+			newVid := VideoData{
+				Time:    0,
+				Playing: true,
+				Url:     data.Url,
+			}
 
-		newVid := VideoData{
-			Time:    0,
-			Playing: true,
-			Url:     data.Url,
+			err := u.Room.addVideoToPlaylist(newVid)
+			if err != nil {
+				panic(err)
+			}
+
+			u.broadcastMessage(SocketMessage{"REQUEST", newVid, meta})
 		}
-
-		err := u.Room.addVideoToPlaylist(newVid)
-		if err != nil {
-			panic(err)
-		}
-
-		u.broadcastMessage(SocketMessage{"REQUEST", newVid, meta})
 	case END_VIDEO:
 		u.Room.shiftPlaylistVideo()
 		up, err := u.Room.getPlaylist()
