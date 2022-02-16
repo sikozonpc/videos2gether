@@ -60,9 +60,7 @@ func HandleActionEvent(rawMsg []byte, u *User) {
 			panic(err)
 		}
 
-		// TODO: Validate if END_VIDEO should be sent here?
-		u.broadcastMessage(SocketMessage{"END_VIDEO", newVid, meta})
-
+		u.broadcastMessage(SocketMessage{"REQUEST", newVid, meta})
 	case END_VIDEO:
 		u.Room.shiftPlaylistVideo()
 		up, err := u.Room.getPlaylist()

@@ -46,7 +46,7 @@ export const useRoom = () => {
 
   useEffect(() => {
     (async () => setTimeout(getPlaylist, 1000))();
-  }, [getPlaylist])
+  }, [getPlaylist]);
 
   const seekVideo = (durationTime: number) => {
     console.log('seeking to', durationTime);
@@ -73,15 +73,9 @@ export const useRoom = () => {
 
     switch (action) {
       case ActionType.REQUEST: {
-        (async () => getPlaylist())()
-        console.log(videoData)
-
         if (!res.data) return
 
-        const isRequestingNewVideo = stateRef.current?.url !== res.data.url
-        if (isRequestingNewVideo) return
-
-        syncVideoWithServer(res.data)
+        setPlaylist((p) => p.concat(res.data));
         return
       }
 
@@ -105,6 +99,7 @@ export const useRoom = () => {
       case ActionType.END_VIDEO: {
         if (!res.data || !res.data.url) return
 
+        stateRef.current = undefined;
         (async () => getPlaylist())()
         syncVideoWithServer(res.data)
         seekVideo(res.data.time)
@@ -132,6 +127,7 @@ export const useRoom = () => {
       case ActionType.SKIP_VIDEO: {
         if (!res.data) return
 
+        stateRef.current = undefined;
         (async () => getPlaylist())()
         syncVideoWithServer(res.data)
         return
@@ -149,6 +145,14 @@ export const useRoom = () => {
 
   const { sendMessage } = useWebsocket(`${WS_URL}/ws/${roomID}`, messageListener);
 
+  const syncVideoWithServer = useCallback((newVideoData: VideoData) => {
+    setVideoData({
+      url: newVideoData.url,
+      time: newVideoData.time,
+      playing: newVideoData.playing,
+    })
+  }, []);
+
   useEffect(() => {
     if (!roomID || synced) return;
 
@@ -161,15 +165,16 @@ export const useRoom = () => {
       action: ActionType.REQUEST,
       data: { url }
     });
-  }
+  };
 
-  const syncVideoWithServer = useCallback((newVideoData: VideoData) => {
-    setVideoData({
-      url: newVideoData.url,
-      time: newVideoData.time,
-      playing: newVideoData.playing,
-    })
-  }, [])
+  useEffect(() => {
+    if (playlist.length === 0) return;
+    const lastAddedVideo = playlist[playlist.length - 1];
+
+    if (playlist.length > 1) return;
+
+    syncVideoWithServer(lastAddedVideo);
+  }, [playlist, syncVideoWithServer]);
 
   const handlePlay = () => {
     if (!playerRef?.current || videoData.playing) return;
