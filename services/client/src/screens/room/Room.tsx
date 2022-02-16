@@ -23,7 +23,7 @@ const Room: React.FC<Props> = () => {
   return (
     <div className='flex bg-gray-900'>
       <div id='left-side'>
-        <div className='w-1/5 p-4 text-white'>
+        <div className='w-full p-4 text-white'>
           {/* <span className='text-white text-sm'>{userName}</span> */}
           <div className='flex mb-2'>
             <span className='text-red-500 font-bold flex bg-black rounded-full py-1 px-2 text-sm'>
@@ -34,14 +34,14 @@ const Room: React.FC<Props> = () => {
             </span>
           </div>
 
-          <div>
+          <div className='w-full '>
             <input
               className='mb-2.5 flex flex-col text-gray-900'
               value={videoUrl}
               onChange={({ target: { value } }) => setVideo(value)}
             />
             <button
-              className='px-1.5 py-2.5 border-none rounded-md text-base text-white bg-gray-700'
+              className='w-full px-1.5 py-2.5 border-none rounded-md text-base text-white bg-gray-700'
               onClick={onVideoRequestClick}
             >
               Add to playlist

@@ -39,7 +39,7 @@ func (s *Server) Run() {
 	signal.Notify(stop, os.Interrupt)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"}, // TODO: Correctly setup CORS
+		AllowedOrigins: []string{env.Vars.Cors.Origin},
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
 	})
 
